@@ -3,18 +3,18 @@ package orchestration
 import (
 	"context"
 	"errors"
-	"github.com/jrolstad/log-analytics-platform/internal/clients"
 	"github.com/jrolstad/log-analytics-platform/internal/config"
+	"github.com/jrolstad/log-analytics-platform/internal/core"
 	"github.com/jrolstad/log-analytics-platform/internal/logging"
+	"github.com/jrolstad/log-analytics-platform/internal/models"
 	"github.com/oracle/oci-go-sdk/v49/common"
 	"github.com/oracle/oci-go-sdk/v49/objectstorage"
+	"github.com/oracle/oci-go-sdk/v49/streaming"
 )
 
-func PublishFilesInBuckets(appConfig *config.AppConfig) error {
-	client, err := clients.GetObjectStorageClient(appConfig)
-	if err != nil {
-		return err
-	}
+func PublishFilesInBuckets(appConfig *config.AppConfig,
+	objectStorageClient objectstorage.ObjectStorageClient,
+	streamClient streaming.StreamClient) error {
 
 	logging.LogEvent("Publishing bucket files",
 		"region", appConfig.Region, "buckets", appConfig.Buckets, "directories", appConfig.Directories)
@@ -22,7 +22,7 @@ func PublishFilesInBuckets(appConfig *config.AppConfig) error {
 	processErrors := make([]error, 0)
 	successfulCount := 0
 	for _, bucketName := range appConfig.Buckets {
-		err := processBucket(bucketName, appConfig.Directories, appConfig.Namespace, client)
+		err := processBucket(bucketName, appConfig.Directories, appConfig.Namespace, objectStorageClient, streamClient, appConfig)
 		if err != nil {
 			processErrors = append(processErrors, err)
 		} else {
@@ -39,8 +39,10 @@ func PublishFilesInBuckets(appConfig *config.AppConfig) error {
 func processBucket(bucketName string,
 	directories []string,
 	namespace string,
-	client objectstorage.ObjectStorageClient) error {
-	bucket, err := getBucket(bucketName, namespace, client)
+	objectStorageClient objectstorage.ObjectStorageClient,
+	streamClient streaming.StreamClient,
+	appConfig *config.AppConfig) error {
+	bucket, err := getBucket(bucketName, namespace, objectStorageClient)
 	if err != nil {
 		return err
 	}
@@ -50,7 +52,7 @@ func processBucket(bucketName string,
 
 	processErrors := make([]error, 0)
 	for _, directory := range directories {
-		err := processDirectory(&bucket, directory, client)
+		err := processDirectory(&bucket, directory, objectStorageClient, streamClient, appConfig)
 		if err != nil {
 			processErrors = append(processErrors, err)
 		}
@@ -61,8 +63,10 @@ func processBucket(bucketName string,
 
 func processDirectory(bucket *objectstorage.Bucket,
 	directory string,
-	client objectstorage.ObjectStorageClient) error {
-	bucketObjects, err := listObjectsInBucket(bucket, directory, client)
+	objectStorageClient objectstorage.ObjectStorageClient,
+	streamClient streaming.StreamClient,
+	appConfig *config.AppConfig) error {
+	bucketObjects, err := listObjectsInBucket(bucket, directory, objectStorageClient)
 	if err != nil {
 		return err
 	}
@@ -72,7 +76,7 @@ func processDirectory(bucket *objectstorage.Bucket,
 		"directory", directory,
 		"fileCount", len(bucketObjects))
 
-	err = publishBucketObjects(bucket, bucketObjects)
+	err = publishBucketObjects(bucket, bucketObjects, streamClient, appConfig)
 	if err != nil {
 		return err
 	}
@@ -127,12 +131,42 @@ func getBucket(bucketName string,
 	return bucket.Bucket, nil
 }
 
-func publishBucketObjects(bucket *objectstorage.Bucket, toPublish []objectstorage.ObjectSummary) error {
+func publishBucketObjects(bucket *objectstorage.Bucket,
+	toPublish []objectstorage.ObjectSummary,
+	client streaming.StreamClient,
+	appConfig *config.AppConfig) error {
+	publishingErrors := make([]error, 0)
 	for _, item := range toPublish {
-		logging.LogEvent("Publishing bucket object",
-			"name", item.Name,
-			"bucket", bucket.Name,
-			"namespace", bucket.Namespace)
+		message := mapToFileMessage(bucket, item)
+
+		request := streaming.PutMessagesRequest{
+			StreamId: common.String(appConfig.FileStreamId),
+			PutMessagesDetails: streaming.PutMessagesDetails{
+				Messages: []streaming.PutMessagesDetailsEntry{
+					{
+						Value: []byte(core.MapToJson(message)),
+						Key:   []byte(core.MapUniqueIdentifier(*bucket.Id, *item.Name)),
+					},
+				},
+			},
+		}
+
+		response, err := client.PutMessages(context.Background(), request)
+		if err != nil {
+			publishingErrors = append(publishingErrors, err)
+		} else {
+			if response.Failures != nil && *response.Failures > 0 {
+				publishingErrors = append(publishingErrors, errors.New("Publishing failed"))
+			}
+		}
 	}
-	return nil
+	return errors.Join(publishingErrors...)
+}
+
+func mapToFileMessage(bucket *objectstorage.Bucket, summary objectstorage.ObjectSummary) models.FilePublished {
+	return models.FilePublished{
+		BucketName:      *bucket.Name,
+		BucketNamespace: *bucket.Namespace,
+		FilePath:        *summary.Name,
+	}
 }
