@@ -3,6 +3,7 @@ package orchestration
 import (
 	"context"
 	"errors"
+	"github.com/jrolstad/log-analytics-platform/internal/clients"
 	"github.com/jrolstad/log-analytics-platform/internal/config"
 	"github.com/jrolstad/log-analytics-platform/internal/logging"
 	"github.com/oracle/oci-go-sdk/v49/common"
@@ -10,8 +11,7 @@ import (
 )
 
 func PublishFilesInBuckets(appConfig *config.AppConfig) error {
-	configProvider := common.DefaultConfigProvider()
-	client, err := objectstorage.NewObjectStorageClientWithConfigurationProvider(configProvider)
+	client, err := clients.GetObjectStorageClient(appConfig)
 	if err != nil {
 		return err
 	}
