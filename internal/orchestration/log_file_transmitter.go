@@ -17,14 +17,14 @@ func PublishFilesInBuckets(appConfig *config.AppConfig) error {
 	}
 
 	logging.LogEvent("Publishing bucket files",
-		"region", appConfig.Region, "buckets", len(appConfig.Buckets), "directories", len(appConfig.Directories))
+		"region", appConfig.Region, "buckets", appConfig.Buckets, "directories", appConfig.Directories)
 
 	processErrors := make([]error, 0)
 	successfulCount := 0
 	for _, bucketName := range appConfig.Buckets {
-		err := processBucket(bucketName, appConfig.Directories, appConfig.Region, client)
+		err := processBucket(bucketName, appConfig.Directories, appConfig.Namespace, client)
 		if err != nil {
-			processErrors = append(processErrors)
+			processErrors = append(processErrors, err)
 		} else {
 			successfulCount++
 		}
@@ -38,19 +38,19 @@ func PublishFilesInBuckets(appConfig *config.AppConfig) error {
 
 func processBucket(bucketName string,
 	directories []string,
-	region string,
+	namespace string,
 	client objectstorage.ObjectStorageClient) error {
-	bucket, err := getBucket(bucketName, region, client)
+	bucket, err := getBucket(bucketName, namespace, client)
 	if err != nil {
 		return err
 	}
 
 	logging.LogEvent("Processing bucket",
-		"name", bucket.Name, "id", bucket.Id, "region", region)
+		"name", bucket.Name, "id", bucket.Id, "namespace", bucket.Namespace)
 
 	processErrors := make([]error, 0)
 	for _, directory := range directories {
-		err := processDirectory(bucketName, directory, region, client)
+		err := processDirectory(&bucket, directory, client)
 		if err != nil {
 			processErrors = append(processErrors, err)
 		}
@@ -59,21 +59,20 @@ func processBucket(bucketName string,
 	return errors.Join(processErrors...)
 }
 
-func processDirectory(bucketName string,
+func processDirectory(bucket *objectstorage.Bucket,
 	directory string,
-	region string,
 	client objectstorage.ObjectStorageClient) error {
-	bucketObjects, err := listObjectsInBucket(bucketName, directory, region, client)
+	bucketObjects, err := listObjectsInBucket(bucket, directory, client)
 	if err != nil {
 		return err
 	}
 
 	logging.LogEvent("Processing bucket directory",
-		"bucket", bucketName,
+		"bucket", bucket.Name,
 		"directory", directory,
 		"fileCount", len(bucketObjects))
 
-	err = publishBucketObjects(bucketObjects)
+	err = publishBucketObjects(bucket, bucketObjects)
 	if err != nil {
 		return err
 	}
@@ -81,9 +80,8 @@ func processDirectory(bucketName string,
 	return nil
 }
 
-func listObjectsInBucket(bucketName string,
+func listObjectsInBucket(bucket *objectstorage.Bucket,
 	directory string,
-	region string,
 	client objectstorage.ObjectStorageClient) ([]objectstorage.ObjectSummary, error) {
 	result := make([]objectstorage.ObjectSummary, 0)
 	listErrors := make([]error, 0)
@@ -93,8 +91,8 @@ func listObjectsInBucket(bucketName string,
 
 	for hasNext == true {
 		request := objectstorage.ListObjectsRequest{
-			NamespaceName: common.String(region),
-			BucketName:    common.String(bucketName),
+			NamespaceName: bucket.Namespace,
+			BucketName:    bucket.Name,
 			Prefix:        common.String(directory),
 		}
 		if nextPage != nil {
@@ -116,10 +114,10 @@ func listObjectsInBucket(bucketName string,
 }
 
 func getBucket(bucketName string,
-	region string,
+	namespace string,
 	client objectstorage.ObjectStorageClient) (objectstorage.Bucket, error) {
 	request := objectstorage.GetBucketRequest{
-		NamespaceName: common.String(region),
+		NamespaceName: common.String(namespace),
 		BucketName:    common.String(bucketName),
 	}
 	bucket, err := client.GetBucket(context.Background(), request)
@@ -129,9 +127,12 @@ func getBucket(bucketName string,
 	return bucket.Bucket, nil
 }
 
-func publishBucketObjects(toPublish []objectstorage.ObjectSummary) error {
+func publishBucketObjects(bucket *objectstorage.Bucket, toPublish []objectstorage.ObjectSummary) error {
 	for _, item := range toPublish {
-		logging.LogEvent("Publishing bucket object", "name", item.Name, "size", item.Size)
+		logging.LogEvent("Publishing bucket object",
+			"name", item.Name,
+			"bucket", bucket.Name,
+			"namespace", bucket.Namespace)
 	}
 	return nil
 }

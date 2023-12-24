@@ -22,3 +22,4 @@ go.work
 
 .idea/
 secrets/
+/sample_data/

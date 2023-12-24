@@ -10,6 +10,7 @@ func GetAppConfig() *AppConfig {
 		Region:      os.Getenv("log_analyzer_region"),
 		Buckets:     strings.Split(os.Getenv("log_analzyer_buckets"), ","),
 		Directories: strings.Split(os.Getenv("log_analzyer_directories"), ","),
+		Namespace:   os.Getenv("log_analyzer_namespace"),
 
 		TenancyOcid: os.Getenv("log_analyzer_tenancyocid"),
 		UserOcid:    os.Getenv("log_analyzer_userocid"),
@@ -20,6 +21,7 @@ func GetAppConfig() *AppConfig {
 
 type AppConfig struct {
 	Region      string
+	Namespace   string
 	Buckets     []string
 	Directories []string
 

@@ -23,6 +23,12 @@ func LogTrace(message string, keysAndValues ...interface{}) {
 	logger.Infow(message, properties...)
 }
 
+func LogError(err error, keysAndValues ...interface{}) {
+	logger := getLogger()
+	properties := appendLogType(keysAndValues, "trace")
+	logger.Errorw(err.Error(), properties...)
+}
+
 var logger *zap.SugaredLogger
 var locker = &sync.Mutex{}
 
