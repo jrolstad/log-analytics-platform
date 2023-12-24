@@ -16,7 +16,8 @@ func PublishFilesInBuckets(appConfig *config.AppConfig) error {
 		return err
 	}
 
-	logging.LogEvent("Publishing bucket files", "region", appConfig.Region)
+	logging.LogEvent("Publishing bucket files",
+		"region", appConfig.Region, "buckets", len(appConfig.Buckets), "directories", len(appConfig.Directories))
 
 	processErrors := make([]error, 0)
 	successfulCount := 0
