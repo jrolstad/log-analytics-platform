@@ -6,7 +6,7 @@ import (
 	"github.com/jrolstad/log-analytics-platform/internal/config"
 	"github.com/jrolstad/log-analytics-platform/internal/core"
 	"github.com/jrolstad/log-analytics-platform/internal/logging"
-	"github.com/jrolstad/log-analytics-platform/internal/models"
+	"github.com/jrolstad/log-analytics-platform/internal/mapping"
 	"github.com/oracle/oci-go-sdk/v49/common"
 	"github.com/oracle/oci-go-sdk/v49/objectstorage"
 	"github.com/oracle/oci-go-sdk/v49/streaming"
@@ -136,37 +136,41 @@ func publishBucketObjects(bucket *objectstorage.Bucket,
 	client streaming.StreamClient,
 	appConfig *config.AppConfig) error {
 	publishingErrors := make([]error, 0)
-	for _, item := range toPublish {
-		message := mapToFileMessage(bucket, item)
 
-		request := streaming.PutMessagesRequest{
-			StreamId: common.String(appConfig.FileStreamId),
-			PutMessagesDetails: streaming.PutMessagesDetails{
-				Messages: []streaming.PutMessagesDetailsEntry{
-					{
-						Value: []byte(core.MapToJson(message)),
-						Key:   []byte(core.MapUniqueIdentifier(*bucket.Id, *item.Name)),
-					},
-				},
-			},
-		}
+	for _, item := range toPublish {
+		message := mapping.MapToFileMessage(bucket, item)
+		request := mapToStreamPutRequest(appConfig.FileStreamId, core.MapUniqueIdentifier(*bucket.Id, *item.Name), message)
 
 		response, err := client.PutMessages(context.Background(), request)
 		if err != nil {
 			publishingErrors = append(publishingErrors, err)
 		} else {
 			if response.Failures != nil && *response.Failures > 0 {
-				publishingErrors = append(publishingErrors, errors.New("Publishing failed"))
+				publishingErrors = append(publishingErrors, errors.New("publishing failed"))
 			}
 		}
 	}
+
+	logging.LogEvent("Published files to stream",
+		"streamId", appConfig.FileStreamId,
+		"sourceBucket", *bucket.Name,
+		"sourceNamespace", *bucket.Namespace,
+		"fileCount", len(toPublish))
+
 	return errors.Join(publishingErrors...)
 }
 
-func mapToFileMessage(bucket *objectstorage.Bucket, summary objectstorage.ObjectSummary) models.FilePublished {
-	return models.FilePublished{
-		BucketName:      *bucket.Name,
-		BucketNamespace: *bucket.Namespace,
-		FilePath:        *summary.Name,
+func mapToStreamPutRequest(streamId string, uniqueIdentifier string, payload interface{}) streaming.PutMessagesRequest {
+	request := streaming.PutMessagesRequest{
+		StreamId: common.String(streamId),
+		PutMessagesDetails: streaming.PutMessagesDetails{
+			Messages: []streaming.PutMessagesDetailsEntry{
+				{
+					Value: []byte(core.MapToJson(payload)),
+					Key:   []byte(uniqueIdentifier),
+				},
+			},
+		},
 	}
+	return request
 }
