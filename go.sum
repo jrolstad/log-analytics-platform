@@ -1,4 +1,6 @@
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/fnproject/fdk-go v0.0.39 h1:ro/APuyc2Vj/Yq4s4fXn2Ici74HcKfEYJkdY4hkDD6c=
+github.com/fnproject/fdk-go v0.0.39/go.mod h1:hCpiyW8oIJpRdegoLf8PxKf9k+8mZZGeYgwSKOVG+K0=
 github.com/oracle/oci-go-sdk/v49 v49.2.0 h1:l4PUk81EKdTDD4mDg5wrELpdWFqYeE9KYejfNgtsyUI=
 github.com/oracle/oci-go-sdk/v49 v49.2.0/go.mod h1:E8q2DXmXnSozLdXHUFF+o3L2gzcWbiFIPFYOYWdqOfc=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
