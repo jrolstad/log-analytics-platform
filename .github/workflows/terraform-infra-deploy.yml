@@ -1,0 +1,43 @@
+name: terraform-deploy-prd
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./deployments/infra
+        shell: bash
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Init
+        run: terraform init -input=false -backend-config="address=${{secrets.BACKEND_STATE_LOCATION}}"
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Write Key File
+        run: |
+          echo "${{secrets.AUTH_KEYFILE}}" >> ./oci-key.pem
+
+      - name: Write tfvars file
+        run: |
+          echo 'environment="prd"' >> ./prd.tfvars
+          echo 'region="us-sanjose-1"' >> ./prd.tfvars
+          echo 'tenant_id="${{secrets.TENANT_ID}}"' >> ./prd.tfvars
+          echo 'root_compartment_id="${{secrets.ROOT_COMPARTMENT_ID}}"' >> ./prd.tfvars
+          echo 'user_id="${{secrets.USER_ID}}"' >> ./prd.tfvars
+          echo 'auth_fingerprint="${{secrets.AUTH_FINGERPRINT}}"' >> ./prd.tfvars
+          echo 'auth_keyfile="./oci-key.pem"' >> ./prd.tfvars
+
+      - name: Terraform Apply
+        run: terraform apply -input=false -auto-approve -no-color -var-file=./prd.tfvars
