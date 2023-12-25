@@ -38,3 +38,9 @@ variable "environment" {
   description = "What type of environment (dev,tst,prd)"
   type        = string
 }
+
+variable "default_stream_partion_count" {
+  description = "Default number of stream partitions"
+  type        = number
+  default     = 1
+}
