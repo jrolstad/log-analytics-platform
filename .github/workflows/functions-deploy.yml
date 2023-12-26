@@ -35,6 +35,13 @@ jobs:
       - name: Run Unit Tests
         run: go test ./...
 
+      - name: Get OCIR Repository
+        uses: oracle-actions/get-ocir-repository@v1.2.1
+        id: get-ocir-repository
+        with:
+          name: log-analyzer-prd
+          compartment: ocid1.compartment.oc1..aaaaaaaafvwzrresb24efyix2yosf25wpvcw3idumlc2q4agztjegfklr4ha
+
       - name: Log into OCIR
         uses: oracle-actions/login-ocir@v1.2.1
         id: login-ocir
@@ -45,5 +52,5 @@ jobs:
         id: tag-and-push-image
         run: |
           docker build -f deployments/containers/file-receiver/Dockerfile -t file-receiver:latest .
-          docker tag file-receiver:latest ${{ secrets.REGION }}.ocir.io/${{ secrets.TENANT_NAMESPACE }}/log-analyzer-prd:latest
-          docker push ${{ secrets.REGION }}.ocir.io/${{ secrets.TENANT_NAMESPACE }}/log-analyzer-prd:latest
+          docker tag file-receiver:latest "${{ steps.get-ocir-repository.outputs.repo_path }}:latest"
+          docker push "${{ steps.get-ocir-repository.outputs.repo_path }}:latest"
