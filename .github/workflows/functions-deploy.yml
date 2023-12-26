@@ -56,5 +56,5 @@ jobs:
         id: tag-and-push-image
         run: |
           docker build -f deployments/containers/file-receiver/Dockerfile -t file-receiver:${{ steps.set-image-tag.outputs.image_tag }} .
-          docker tag file-receiver:${{ steps.set-image-tag.outputs.image_tag }} "${{ steps.get-ocir-repository.outputs.repo_path }}/filereceiver:${{ steps.set-image-tag.outputs.image_tag }}"
-          docker push "${{ steps.get-ocir-repository.outputs.repo_path }}/filereceiver:${{ steps.set-image-tag.outputs.image_tag }}"
+          docker tag file-receiver:${{ steps.set-image-tag.outputs.image_tag }} "${{ steps.get-ocir-repository.outputs.repo_path }}:filereceiver-${{ steps.set-image-tag.outputs.image_tag }}"
+          docker push "${{ steps.get-ocir-repository.outputs.repo_path }}:filereceiver-${{ steps.set-image-tag.outputs.image_tag }}"
