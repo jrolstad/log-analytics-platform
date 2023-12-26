@@ -18,11 +18,8 @@ data "oci_core_services" "all" {
 resource "oci_core_service_gateway" "primary" {
   compartment_id = oci_identity_compartment.primary.id
   vcn_id         = oci_core_virtual_network.primary.id
-  dynamic "services" {
-    for_each = toset(data.oci_core_services.all.services)
-    content {
-      service_id = services.value.id
-    }
+  services {
+    service_id = data.oci_core_services.all.services[0].id
   }
   freeform_tags = { "service" = var.service_name, "environment" = var.environment }
 }
