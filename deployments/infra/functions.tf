@@ -10,7 +10,7 @@ resource "oci_functions_function" "file_published_handler" {
   display_name   = "file-published-handler"
   image          = var.file_receiver_image_id
   memory_in_mbs  = 2048
-  #config = var.function_config
+  config         = {}
   provisioned_concurrency_config {
     strategy = "NONE"
   }
