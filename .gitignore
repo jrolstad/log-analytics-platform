@@ -23,3 +23,5 @@ go.work
 .idea/
 secrets/
 /sample_data/
+.terraform/
+.terraform.lock.hcl

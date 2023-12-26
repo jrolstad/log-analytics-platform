@@ -47,6 +47,6 @@ variable "default_stream_partion_count" {
 
 variable "file_receiver_version" {
   description = "Version of the file receiver to use"
-  type = string
-  default = "latest"
+  type        = string
+  default     = "latest"
 }
