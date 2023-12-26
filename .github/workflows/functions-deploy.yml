@@ -48,9 +48,13 @@ jobs:
         with:
           auth_token: ${{ secrets.AUTH_TOKEN }}
 
+      - name: Create Image Tag
+        id: set-image-tag
+        run: echo "::set-output name=image_tag::$(date +'%Y%m%d%H%M%S')"
+
       - name: Build and push a container image
         id: tag-and-push-image
         run: |
-          docker build -f deployments/containers/file-receiver/Dockerfile -t file-receiver:latest .
-          docker tag file-receiver:latest "${{ steps.get-ocir-repository.outputs.repo_path }}:latest"
-          docker push "${{ steps.get-ocir-repository.outputs.repo_path }}:latest"
+          docker build -f deployments/containers/file-receiver/Dockerfile -t file-receiver:${{ steps.set-image-tag.outputs.image_tag }} .
+          docker tag file-receiver:latest "${{ steps.get-ocir-repository.outputs.repo_path }}:${{ steps.set-image-tag.outputs.image_tag }}"
+          docker push "${{ steps.get-ocir-repository.outputs.repo_path }}:${{ steps.set-image-tag.outputs.image_tag }}"
