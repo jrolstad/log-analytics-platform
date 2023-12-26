@@ -15,7 +15,7 @@ resource "oci_logging_log" "connector" {
     source {
       category    = "all"
       resource    = oci_sch_service_connector.file_published_handler.id
-      service     = "SCH"
+      service     = "serviceconnector"
       source_type = "OCISERVICE"
     }
   }
