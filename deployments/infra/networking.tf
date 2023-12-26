@@ -21,7 +21,7 @@ resource "oci_core_service_gateway" "primary" {
   dynamic "services" {
     for_each = data.oci_core_services.all.services
     content {
-      service_id = each.id
+      service_id = each.value.id
     }
   }
   freeform_tags = { "service" = var.service_name, "environment" = var.environment }
