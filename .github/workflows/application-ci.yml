@@ -40,4 +40,4 @@ jobs:
           push: false
           tags: oci-resource-manager:cibuild
           context: .
-          file: deployments/containers/scheduler/Dockerfile
+          file: deployments/containers/file-receiver/Dockerfile
