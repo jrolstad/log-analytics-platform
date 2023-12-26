@@ -1,1 +1,1 @@
-file_receiver_image_id="axvqjgi7ko9r/log-analyzer-prd:filereceiver-20231226184240"
+file_receiver_image_id="sjc.ocir.io/axvqjgi7ko9r/log-analyzer-prd:filereceiver-20231226184240"
