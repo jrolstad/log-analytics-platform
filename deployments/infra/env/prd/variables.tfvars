@@ -1,1 +1,1 @@
-file_receiver_version="filereceiver-20231226184240"
+file_receiver_version="ocid1.containerimage.oc1.us-sanjose-1.0.axvqjgi7ko9r.aaaaaaaaum6jteuooxnwg2ctlz6algpfmtuwasaoo36x6aa3qprop3ka4yaq"

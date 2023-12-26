@@ -45,8 +45,7 @@ variable "default_stream_partion_count" {
   default     = 1
 }
 
-variable "file_receiver_version" {
-  description = "Version of the file receiver to use"
+variable "file_receiver_image_id" {
+  description = "Image Id of the file receiver to use"
   type        = string
-  default     = "latest"
 }
