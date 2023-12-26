@@ -46,6 +46,9 @@ jobs:
         run: |
           docker build -f deployments/containers/file-receiver/Dockerfile -t log-analyzer-prd/file-receiver:latest .
           docker push log-analyzer-prd/file-receiver:latest
+          docker build -f deployments/containers/file-receiver/Dockerfile -t file-receiver:latest .
+          docker tag file-receiver:latest ${{ secrets.REGION }}.ocir.io/${{ secrets.TENANT_ID }}/log-analyzer-prd:latest
+          docker push ${{ secrets.REGION }}.ocir.io/${{ secrets.TENANT_ID }}/log-analyzer-prd:latest
 
       - name: Build File Receiver
         uses: docker/build-push-action@v2
