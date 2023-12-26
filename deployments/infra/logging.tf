@@ -5,7 +5,6 @@ resource "oci_logging_log_group" "primary" {
 }
 
 resource "oci_logging_log" "connector" {
-  #Required
   display_name = "connectorhub"
   log_group_id = oci_logging_log_group.primary.id
   log_type     = "SERVICE"
@@ -15,7 +14,7 @@ resource "oci_logging_log" "connector" {
     source {
       category    = "all"
       resource    = oci_sch_service_connector.file_published_handler.id
-      service     = "serviceconnector"
+      service     = "Connector Hub"
       source_type = "OCISERVICE"
     }
   }
