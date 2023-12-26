@@ -19,7 +19,7 @@ resource "oci_core_service_gateway" "primary" {
   compartment_id = oci_identity_compartment.primary.id
   vcn_id         = oci_core_virtual_network.primary.id
   dynamic "services" {
-    for_each = data.oci_core_services.all.services
+    for_each = toset(data.oci_core_services.all.services)
     content {
       service_id = each.value.id
     }
