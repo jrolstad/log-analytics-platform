@@ -39,7 +39,7 @@ jobs:
         uses: oracle-actions/login-ocir@v1.2.1
         id: login-ocir
         with:
-          auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
+          auth_token: ${{ secrets.AUTH_TOKEN }}
 
       - name: Build and push a container image
         id: tag-and-push-image
