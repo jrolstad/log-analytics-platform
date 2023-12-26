@@ -11,6 +11,9 @@ resource "oci_functions_function" "file_published_handler" {
   image          = var.file_receiver_image_id
   memory_in_mbs  = 2048
   #config = var.function_config
+  provisioned_concurrency_config {
+    strategy = "NONE"
+  }
   timeout_in_seconds = 300
   freeform_tags      = { "service" = var.service_name, "environment" = var.environment }
 }
