@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func MapToJson(toMap interface{}) string {
@@ -17,6 +18,7 @@ func MapToJson(toMap interface{}) string {
 }
 
 func MapUniqueIdentifier(values ...string) string {
+	values = append(values, time.Now().String())
 	resultingValue := strings.Join(values, "|")
 	hashedValue := sha256.Sum256([]byte(resultingValue))
 
